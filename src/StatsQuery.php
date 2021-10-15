@@ -217,10 +217,11 @@ class StatsQuery
         $periodDateFormat = StatsEvent::getPeriodDateFormat($this->period);
 
         $rankedSets = $this->queryStats()
-            ->selectRaw("ROW_NUMBER() OVER (PARTITION BY {$periodDateFormat} ORDER BY `id` DESC) AS rn, `stats_events`.*, {$periodDateFormat} as period")
+            ->selectRaw("(ROW_NUMBER() OVER (PARTITION BY {$periodDateFormat} ORDER BY `id` DESC)) AS rn, `". \DB::getTablePrefix() ."stats_events`.*, {$periodDateFormat} as period")
             ->whereType(StatsEvent::TYPE_SET)
             ->where('created_at', '>=', $this->start)
             ->where('created_at', '<', $this->end)
+            ->groupBy('id', 'name', 'type', 'value', 'created_at', 'updated_at')
             ->get();
 
         $latestSetPerPeriod = $rankedSets->where('rn', 1);
